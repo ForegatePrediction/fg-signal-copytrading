@@ -1,0 +1,18 @@
+[
+ {"id":1069,"legs":[{"market_type":"map_handicap","selection":"MGLZ","side":"YES","line":"1.5","profit_pct":"81.82","risk_flag":"high"}]},
+ {"id":1087,"legs":[{"market_type":"moneyline","selection":"HOF","side":"NO","profit_pct":"33.33"},{"market_type":"moneyline","selection":"CRY","side":"YES","profit_pct":"92.31"},{"market_type":"totals","selection":"OVER","line":"2.5","profit_pct":"49.25"}]},
+ {"id":1092,"legs":[{"selection":"AZ","side":"NO"},{"selection":"JUV","profit_pct":"100","risk_flag":"high"}]},
+ {"id":1103,"legs":[{"selection":"MOE","side":"NO","profit_pct":"47.06"}]},
+ {"id":1122,"legs":[{"selection":"PSG"},{"market_type":"spreads","line":"-1.5"},{"market_type":"totals"}]},
+ {"id":1123,"format":"BO5","legs":[{"profit_pct":"23.246"}]},
+ {"id":1156,"sport":"american_football","legs":[{"selection":"BUF"}]},
+ {"id":1159,"sport":"tennis","legs":[{"selection":"MANNARI"}]},
+ {"id":1168,"legs":[{"status":"UNPARSED","reason":"MONEYLINE_WITH_HANDICAP"}]},
+ {"id":1184,"format":"BO3","home":"FUT Esports","away":"MOUZ","legs":[{"market_type":"map_handicap","selection":"FUT","line":"1.5"}]},
+ {"id":1185,"legs":[{"market_type":"totals","profit_pct":"23.46"},{"selection":"ITA","side":"NO","risk_flag":"high"}]},
+ {"id":1202,"legs":[{"market_type":"map_handicap","selection":"MOUZ"},{"market_type":"total_maps","selection":"OVER","line":"2.5","profit_pct":"100"}]},
+ {"id":1211,"legs":[{"market_type":"both_teams_to_score","selection":"BOTH_TEAMS_TO_SCORE","side":"YES","profit_pct":"85.19"}]},
+ {"id":1224,"legs":[{"status":"PARSED","selection":"PRT"},{"status":"UNPARSED","reason":"MISSING_OR_MALFORMED_PROFIT"}]},
+ {"id":1229,"home":"Japan","away":"Brazil","legs":[{"selection":"JPN","profit_pct":"40.85"}]},
+ {"id":1259,"type":"RESULT","legs":[]}
+]

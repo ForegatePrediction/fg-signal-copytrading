@@ -1,0 +1,7 @@
+{
+  "name": "tg-copytrader",
+  "productName": "TGCopyTrader",
+  "version": "0.8.2",
+  "private": true,
+  "main": "main.cjs"
+}
