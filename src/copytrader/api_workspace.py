@@ -116,22 +116,85 @@ def option_for(detail, outcome_id, option_id):
     raise ValueError('市场详情中找不到该选项。')
 
 
+# Verified TG code, fixture team and OpenAPI label. Never strip digits from
+# arbitrary option IDs or infer a team from the order of the options.
+TEAM_LABELS = {
+    ('lin', 'lask linz'): 'lin2', ('bah', 'bahrain'): 'bah1',
+    ('sin', 'sinners'): 'sin2', ('inox', 'ex-inox division'): 'inox1',
+    ('aur', 'aurora'): 'aur1', ('tl', 'liquid'): 'tl1',
+    ('ts', 'team spirit'): 'ts8', ('ch', 'cyberhero'): 'ch1',
+    ('ore', 'oregon ducks'): 'oregon ducks', ('den', 'nuggets'): 'nuggets',
+    ('lac', 'clippers'): 'clippers', ('ott', 'senators'): 'senators',
+    ('barcelon', 'barcelona'): 'barcelona',
+    ('uscb', 'uc santa barbara gauchos'): 'uc santa barbara gauchos',
+}
+
+
+def soccer_team_codes(groups, fixtures):
+    teams = {}
+    for group in groups:
+        title = keytext(group.get('title') or '')
+        rules = keytext(group.get('description') or '')
+        if (title in fixtures and f'if {title} wins, this market will resolve to "yes".' in rules
+                and 'within the first 90 minutes of regular play plus stoppage time' in rules
+                and {keytext(o.get('title') or '') for o in group.get('options', [])} == {'yes', 'no'}):
+            teams.setdefault(title, set()).add(keytext(group.get('name') or ''))
+    return teams
+
+
+def soccer_spread(group, name, title, fixtures, teams, line):
+    # Some soccer spreads use just the unsigned line as the market name.
+    header = re.fullmatch(r'(.+) \(-([0-9]+(?:\.[0-9]+)?)\)', title)
+    if not header or header[1] not in fixtures or len(fixtures) != 2 or name != header[2]:
+        return False
+    magnitude = Decimal(header[2])
+    if magnitude != abs(line) or magnitude == 0:
+        return False
+    favorite = header[1]
+    opponent, = fixtures - {favorite}
+    favorite_codes = teams.get(favorite, set())
+    opponent_codes = teams.get(opponent, set())
+    if len(favorite_codes) != 1 or len(opponent_codes) != 1 or favorite_codes == opponent_codes:
+        return False
+    expected = {(next(iter(favorite_codes)), -magnitude), (next(iter(opponent_codes)), magnitude)}
+    options = group.get('options', [])
+    actual = set()
+    for item in options:
+        match = re.fullmatch(r'(.+) ([+-]?[0-9]+(?:\.[0-9]+)?)', keytext(item.get('title') or ''))
+        if match:
+            actual.add((match[1], Decimal(match[2])))
+    rules = keytext(group.get('description') or '')
+    return (len(options) == 2 and actual == expected and f'if {favorite} win the game by ' in rules
+            and f'otherwise, this market will resolve to "{opponent}".' in rules)
+
+
 def match_signal(detail, signal, leg):
     if detail.get('marketId') != signal.event_id:
         raise ValueError('信号事件编号和 API 市场编号不同。')
     selection = keytext(leg.selection)
     fixtures = {keytext(signal.home), keytext(signal.away)} - {''}
+    labels = {selection}
+    event_title = keytext(detail.get('title') or '')
+    for team in fixtures:
+        if (selection, team) in TEAM_LABELS and re.search(r'(?<!\w)' + re.escape(team) + r'(?!\w)', event_title):
+            labels.add(TEAM_LABELS[selection, team])
+    groups = detail.get('outcomes', [])
+    teams = soccer_team_codes(groups, fixtures) if leg.market_type == 'spreads' else {}
     candidates = []
-    for group in detail.get('outcomes', []):
+    for group in groups:
         name = keytext(group.get('name') or '')
         title = keytext(group.get('title') or '')
         options = group.get('options', [])
         if leg.market_type in {'moneyline', 'game_winner'}:
             if leg.market_type == 'moneyline':
                 eligible = name == 'moneyline' or title == 'match winner'
+                option_names = {keytext(item.get('title') or '') for item in options}
+                fixture_title = ' vs. '.join(keytext(t) for t in (signal.home, signal.away))
+                eligible |= (title == fixture_title and name == fixture_title and len(options) == 2
+                             and option_names == fixtures and len(fixtures) == 2)
                 # ForeGate can reuse the same team name for several soccer markets.
                 rules = keytext(group.get('description') or '')
-                team_binary = (signal.sport == 'soccer' and name == selection and title in fixtures and
+                team_binary = (name in labels and title in fixtures and
                                f'if {title} wins, this market will resolve to "yes".' in rules and
                                'within the first 90 minutes of regular play plus stoppage time' in rules and
                                {keytext(item.get('title') or '') for item in options} == {'yes', 'no'})
@@ -143,7 +206,7 @@ def match_signal(detail, signal, leg):
             binary_match = re.fullmatch(r'(.+?) (?:will win|win|to win)', title)
             for item in options:
                 label = keytext(item.get('title') or '')
-                direct = leg.side == 'YES' and label == selection
+                direct = leg.side == 'YES' and label in labels
                 qualified = label in {f'{selection} win {leg.side.lower()}', f'{selection} {leg.side.lower()}'}
                 binary = (team_binary or (binary_match and binary_match[1] == selection)) and label == leg.side.lower()
                 if direct or qualified or binary:
@@ -152,25 +215,29 @@ def match_signal(detail, signal, leg):
             candidates.extend((group, item) for item in options if keytext(item.get('title') or '') == leg.side.lower())
         elif leg.market_type in {'totals', 'total_maps', 'spreads', 'map_handicap'} and leg.side == 'YES' and leg.line:
             group_patterns = {
-                'totals': r'^(?:total goals|total points|totals|o/u [\d.]+(?: goals| points)?)\b',
+                'totals': r'^(?:total goals|total points|totals)(?: [\d.]+)?$|^o/u [\d.]+(?: goals| points)?$',
                 'total_maps': r'^(?:total maps|o/u [\d.]+ (?:maps|games))\b',
                 'spreads': r'^(?:spreads?|point spread)\b',
                 'map_handicap': r'^map handicap\b',
             }
-            if not any(re.search(group_patterns[leg.market_type], label) for label in (name, title)):
+            named_group = any(re.search(group_patterns[leg.market_type], label) for label in (name, title))
+            if not named_group and not (leg.market_type == 'spreads' and
+                    soccer_spread(group, name, title, fixtures, teams, Decimal(leg.line))):
                 continue
             for item in options:
                 label = keytext(item.get('title') or '')
                 match = re.fullmatch(r'(.+?) ([+-]?\d+(?:\.\d+)?)', label)
                 if not match or Decimal(match[2]) != Decimal(leg.line):
                     continue
-                identities = {selection}
+                identities = set(labels)
                 if leg.market_type in {'totals', 'total_maps'} and selection:
                     identities.add(selection[0])
                 if match[1] in identities:
                     candidates.append((group, item))
-    if len(candidates) != 1:
-        raise ValueError('盘口方向无法唯一对应到 API 选项。')
+    if not candidates:
+        raise ValueError('未找到匹配的 API 盘口选项。')
+    if len(candidates) > 1:
+        raise ValueError(f'找到 {len(candidates)} 个匹配选项，无法唯一确定盘口。')
     return candidates[0]
 
 

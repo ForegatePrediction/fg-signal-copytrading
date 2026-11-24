@@ -34,7 +34,7 @@ AI 从用户提供的 GitHub 地址取得实际的 `OWNER/REPO`。下载该仓�
 
 ## 安装与使用
 
-| 平台 | 0.8.2 分发包 | 文档 |
+| 平台 | 0.8.3 分发包 | 文档 |
 |---|---|---|
 | macOS 13+ · Apple 芯片（M 系列） | `TGCopyTrader-macOS-arm64.dmg` | [macOS 安装与构建](docs/macos.md) |
 | Windows 10/11 · x64 | `TGCopyTrader-Windows-x64.zip` | [Windows 安装与构建](docs/windows.md) |

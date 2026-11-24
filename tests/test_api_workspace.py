@@ -269,7 +269,7 @@ class ApiWorkspaceTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(match_signal(DETAIL, signal, signal.legs[0])[1]['optionId'], '3003')
         group = DETAIL['outcomes'][0]
         without_no = {**DETAIL, 'outcomes': [{**group, 'options': group['options'][::2]}]}
-        with self.assertRaisesRegex(ValueError, '无法唯一'):
+        with self.assertRaisesRegex(ValueError, '未找到匹配'):
             match_signal(without_no, signal, signal.legs[0])
 
     async def test_team_binary_moneyline_matches_exact_fixture_and_side(self):
@@ -280,8 +280,45 @@ class ApiWorkspaceTests(unittest.IsolatedAsyncioTestCase):
         other = {**sevilla, 'outcomeId': '2003', 'description': 'If Sevilla FC scores first, this market will resolve to "Yes".'}
         group, option = match_signal({**DETAIL, 'outcomes': [other, sevilla]}, signal, signal.legs[0])
         self.assertEqual((group['outcomeId'], option['optionId']), ('2002', '3003'))
-        with self.assertRaisesRegex(ValueError, '无法唯一'):
+        with self.assertRaisesRegex(ValueError, '未找到匹配'):
             match_signal({**DETAIL, 'outcomes': [other]}, signal, signal.legs[0])
+
+    def test_soccer_spread_requires_confirmed_teams_sign_and_unique_group(self):
+        record = new_signal()
+        record['text'] = record['text'].replace('Sevilla FC vs Real Betis', 'FK Bodø/Glimt vs LASK Linz').replace(
+            'Moneyline: SEV - NO', 'Spreads: LIN +1.5')
+        signal = parse_message(record)
+        teams = [{'title': team, 'name': code, 'options': [{'title': 'Yes'}, {'title': 'No'}],
+                  'description': f'If {team} wins, this market will resolve to "Yes". '
+                                 'Within the first 90 minutes of regular play plus stoppage time.'}
+                 for team, code in [('FK Bodø/Glimt', 'bog'), ('LASK Linz', 'lin2')]]
+        spread = {'title': 'FK Bodø/Glimt (-1.5)', 'name': '1.5',
+                  'description': 'If FK Bodø/Glimt win the game by 2 or more goals. '
+                                 'Otherwise, this market will resolve to "LASK Linz".',
+                  'options': [{'title': 'bog -1.5'}, {'title': 'lin2 1.5'}]}
+        def resolve(groups):
+            return match_signal({'marketId': MARKET, 'title': 'FK Bodø/Glimt vs LASK Linz', 'outcomes': groups},
+                                signal, signal.legs[0])
+        self.assertEqual(resolve(teams + [spread])[1]['title'], 'lin2 1.5')
+        for groups in ([spread], teams + [{**spread, 'title': 'First half FK Bodø/Glimt (-1.5)'}],
+                       teams + [{**spread, 'options': [{'title': 'lin2 -1.5'}, {'title': 'bog 1.5'}]}]):
+            with self.assertRaisesRegex(ValueError, '未找到匹配'):
+                resolve(groups)
+        with self.assertRaisesRegex(ValueError, '2 个匹配'):
+            resolve(teams + [spread, spread])
+
+    def test_team_alias_does_not_select_map_winner_or_unrelated_fixture(self):
+        record = new_signal()
+        record['text'] = record['text'].replace('⚽ La Liga: Sevilla FC vs Real Betis', '🎮 CS2: Sinners vs Nexus (BO3)').replace(
+            'Moneyline: SEV - NO', 'Moneyline: SIN')
+        signal = parse_message(record)
+        winner = {'name': 'Moneyline', 'title': 'Match Winner', 'options': [{'title': 'sin2'}, {'title': 'nxs1'}]}
+        map_one = {**winner, 'name': 'Map 1 Winner', 'title': 'Map 1 Winner'}
+        detail = {'marketId': MARKET, 'title': 'Counter-Strike: Sinners vs Nexus (BO3)', 'outcomes': [map_one, winner]}
+        self.assertEqual(match_signal(detail, signal, signal.legs[0]), (winner, winner['options'][0]))
+        for invalid in ({**detail, 'outcomes': [map_one]}, {**detail, 'title': 'Another team vs Nexus'}):
+            with self.assertRaisesRegex(ValueError, '未找到匹配'):
+                match_signal(invalid, signal, signal.legs[0])
 
     async def test_market_buy_prepares_when_platform_maximum_exceeds_local_input_maximum(self):
         payload = {**IDS, 'kind': 'order', 'direction': 'BUY', 'orderType': 'MARKET', 'price': '2'}

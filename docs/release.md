@@ -16,7 +16,7 @@ node --test tests/test_account_dom.cjs
 
 ## 首次上传
 
-本次发布版本为 `0.8.2`，标签为 `v0.8.2`。本地 `main` 分支包含客户端源码、示例、测试、构建与安装脚本和文档。可用 `git ls-files` 查看提交清单。安装包位于被 Git 忽略的 `dist/github/`，用于创建 Release。
+本次发布版本为 `0.8.3`，标签为 `v0.8.3`。本地 `main` 分支包含客户端源码、示例、测试、构建与安装脚本和文档。可用 `git ls-files` 查看提交清单。安装包位于被 Git 忽略的 `dist/github/`，用于创建 Release。
 
 1. 在 GitHub 创建空的公开仓库，初始化选项留空。项目所有者可按希望授予的使用和分发权利选择源码许可证。
 2. 在本机项目根目录运行以下命令，将 `OWNER/REPO` 替换为新仓库的所有者和名称。
@@ -24,10 +24,10 @@ node --test tests/test_account_dom.cjs
    ```sh
    git remote add origin https://github.com/OWNER/REPO.git
    git push -u origin main
-   git push origin v0.8.2
+   git push origin v0.8.3
    ```
 
-3. 打开 GitHub 的 Releases，选择已推送的 `v0.8.2`，将 `dist/github/` 中的两个安装包和 `SHA256SUMS.txt` 按原名上传，发布为 Latest。用户即可从 README 的「安装已发布版本」入口安装。GitHub 会从同一标签自动生成源码下载包。
+3. 打开 GitHub 的 Releases，选择已推送的 `v0.8.3`，将 `dist/github/` 中的两个安装包和 `SHA256SUMS.txt` 按原名上传，发布为 Latest。用户即可从 README 的「安装已发布版本」入口安装。GitHub 会从同一标签自动生成源码下载包。
 
 ## 构建与发布两个平台
 
@@ -39,4 +39,4 @@ node --test tests/test_account_dom.cjs
    ./tools/prepare_release.sh
    ```
 
-4. 在 GitHub 为构建所用的源码提交建立版本标签（例如 `v0.8.2`），创建正式 Release，设为 Latest。将 `dist/github/` 中的 `TGCopyTrader-macOS-arm64.dmg`、`TGCopyTrader-Windows-x64.zip` 和 `SHA256SUMS.txt` 按原名作为资产上传。源码标签应包含对应的安装与构建脚本。发布后分别在两端用 README 的命令验收下载和安装。 [GitHub Releases 说明](https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases)
+4. 在 GitHub 为构建所用的源码提交建立版本标签（例如 `v0.8.3`），创建正式 Release，设为 Latest。将 `dist/github/` 中的 `TGCopyTrader-macOS-arm64.dmg`、`TGCopyTrader-Windows-x64.zip` 和 `SHA256SUMS.txt` 按原名作为资产上传。源码标签应包含对应的安装与构建脚本。发布后分别在两端用 README 的命令验收下载和安装。 [GitHub Releases 说明](https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases)
