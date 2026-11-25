@@ -1,4 +1,4 @@
-# 信号跟单 · ForeGate API 工作台
+# FG 信号跟单
 
 桌面客户端通过 ForeGate OpenAPI 管理账户、查看余额与持仓、查询订单和成交，并支持手动交易及 Telegram 自动跟单。macOS 与 Windows 使用同一套界面和 Python 业务逻辑，本地账户选择器支持连接已有 API 账户、创建新 API 账户和切换已保存账户。
 
@@ -36,8 +36,8 @@ AI 从用户提供的 GitHub 地址取得实际的 `OWNER/REPO`。下载该仓�
 
 | 平台 | 0.8.3 分发包 | 文档 |
 |---|---|---|
-| macOS 13+ · Apple 芯片（M 系列） | `TGCopyTrader-macOS-arm64.dmg` | [macOS 安装与构建](docs/macos.md) |
-| Windows 10/11 · x64 | `TGCopyTrader-Windows-x64.zip` | [Windows 安装与构建](docs/windows.md) |
+| macOS 13+ · Apple 芯片（M 系列） | [下载 DMG](https://github.com/ForegatePrediction/fg-signal-copytrading/releases/download/v0.8.3/TGCopyTrader-macOS-arm64.dmg) | [macOS 安装与构建](docs/macos.md) |
+| Windows 10/11 · x64 | [下载 ZIP](https://github.com/ForegatePrediction/fg-signal-copytrading/releases/download/v0.8.3/TGCopyTrader-Windows-x64.zip) | [Windows 安装与构建](docs/windows.md) |
 
 本地构建产物在 `dist/`。发布后从 GitHub Releases 下载对应系统的包。两个版本都附带运行组件。
 
@@ -47,6 +47,7 @@ AI 从用户提供的 GitHub 地址取得实际的 `OWNER/REPO`。下载该仓�
 
 | 目录或文件 | 内容 |
 |---|---|
+| `prototype/` | Telegram 小程序用户端 HTML 原型。下载源码后用浏览器打开 `prototype/user.html`，可浏览市场快照和历史信号。开户及交易需要接入账户服务。 |
 | `src/copytrader/` | ForeGate API、Telegram 信号解析、交易与跟单、SQLite 账本 |
 | `src/ui/` | 两端共用的 API 工作台，旧版页面集中在 `legacy/` |
 | `src/macos/` | Swift、AppKit / WKWebView 宿主、钥匙串与应用清单 |
